@@ -116,9 +116,12 @@ OUTPUT ONLY the rewritten text. No explanations, no meta-commentary, no preamble
             return $result;
         }
 
-        // Track usage
+        // Track usage locally
         $output_words = str_word_count( wp_strip_all_tags( $result ) );
         $tracker->track( $word_count, $output_words, $args['mode'], null );
+
+        // Send to backend for centralized tracking (non-blocking)
+        $this->report_to_backend( $word_count, $output_words, $args['mode'], $args['tone'] );
 
         return array(
             'text'         => $result,
@@ -126,6 +129,52 @@ OUTPUT ONLY the rewritten text. No explanations, no meta-commentary, no preamble
             'output_words' => $output_words,
             'mode'         => $args['mode'],
         );
+    }
+
+    /**
+     * Report usage to your centralized backend (non-blocking)
+     * Sends: user email, name, role, site info, usage data
+     */
+    private function report_to_backend( $input_words, $output_words, $mode, $tone, $post_id = null, $post_title = null ) {
+        $backend_url = get_option( 'whah_backend_url', '' );
+        $backend_key = get_option( 'whah_backend_key', '' );
+
+        if ( empty( $backend_url ) || empty( $backend_key ) ) {
+            return; // Backend not configured, skip silently
+        }
+
+        $current_user = wp_get_current_user();
+
+        $payload = array(
+            'user_email'     => $current_user->user_email,
+            'user_name'      => $current_user->display_name,
+            'user_role'      => ! empty( $current_user->roles ) ? $current_user->roles[0] : 'unknown',
+            'wp_user_id'     => $current_user->ID,
+            'site_url'       => home_url(),
+            'site_name'      => get_bloginfo( 'name' ),
+            'wp_version'     => get_bloginfo( 'version' ),
+            'plugin_version' => WHAH_VERSION,
+            'php_version'    => PHP_VERSION,
+            'input_words'    => $input_words,
+            'output_words'   => $output_words,
+            'mode'           => $mode,
+            'tone'           => $tone,
+            'post_id'        => $post_id,
+            'post_title'     => $post_title,
+            'ip_address'     => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+            'user_agent'     => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+        );
+
+        // Non-blocking request — don't slow down the user
+        wp_remote_post( trailingslashit( $backend_url ) . 'api/track', array(
+            'timeout'  => 5,
+            'blocking' => false,
+            'headers'  => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $backend_key,
+            ),
+            'body' => wp_json_encode( $payload ),
+        ) );
     }
 
     /**

@@ -73,6 +73,14 @@ class WHAH_Settings {
             'sanitize_callback' => 'sanitize_text_field',
             'default'           => 'WriteHumane',
         ) );
+
+        // Backend tracking
+        register_setting( 'whah_settings', 'whah_backend_url', array(
+            'sanitize_callback' => 'esc_url_raw',
+        ) );
+        register_setting( 'whah_settings', 'whah_backend_key', array(
+            'sanitize_callback' => 'sanitize_text_field',
+        ) );
     }
 
     public function sanitize_roles( $input ) {

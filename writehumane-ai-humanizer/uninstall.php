@@ -20,6 +20,8 @@ $options = array(
     'whah_enable_shortcode',
     'whah_allowed_roles',
     'whah_brand_name',
+    'whah_backend_url',
+    'whah_backend_key',
 );
 
 foreach ( $options as $option ) {

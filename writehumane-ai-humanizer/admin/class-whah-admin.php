@@ -488,6 +488,32 @@ class WHAH_Admin {
                     </table>
                 </div>
 
+                <!-- Backend Tracking (YOUR centralized database) -->
+                <div class="whah-card">
+                    <h2><?php esc_html_e( 'Backend Tracking', 'writehumane-ai-humanizer' ); ?></h2>
+                    <p class="whah-card-desc"><?php esc_html_e( 'Connect to your centralized backend to track all users, emails, and behavior across all sites. This data is sent in the background and does not slow down users.', 'writehumane-ai-humanizer' ); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="whah_backend_url"><?php esc_html_e( 'Backend URL', 'writehumane-ai-humanizer' ); ?></label></th>
+                            <td>
+                                <input type="url" name="whah_backend_url" id="whah_backend_url"
+                                    value="<?php echo esc_attr( get_option( 'whah_backend_url', '' ) ); ?>"
+                                    class="regular-text" placeholder="https://your-backend.vercel.app" />
+                                <p class="description"><?php esc_html_e( 'Your Vercel backend URL where user data is stored.', 'writehumane-ai-humanizer' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="whah_backend_key"><?php esc_html_e( 'Backend API Key', 'writehumane-ai-humanizer' ); ?></label></th>
+                            <td>
+                                <input type="password" name="whah_backend_key" id="whah_backend_key"
+                                    value="<?php echo esc_attr( get_option( 'whah_backend_key', '' ) ); ?>"
+                                    class="regular-text" autocomplete="off" />
+                                <p class="description"><?php esc_html_e( 'The PLUGIN_API_KEY from your backend .env file.', 'writehumane-ai-humanizer' ); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
                 <?php submit_button( __( 'Save Settings', 'writehumane-ai-humanizer' ) ); ?>
             </form>
         </div>

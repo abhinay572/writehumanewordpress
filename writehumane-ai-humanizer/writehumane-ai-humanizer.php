@@ -95,6 +95,8 @@ final class WriteHumane_AI_Humanizer {
             'whah_enable_shortcode'   => '1',
             'whah_allowed_roles'      => array( 'administrator', 'editor', 'author' ),
             'whah_brand_name'         => 'WriteHumane',
+            'whah_backend_url'        => '',
+            'whah_backend_key'        => '',
         );
 
         foreach ( $defaults as $key => $value ) {
