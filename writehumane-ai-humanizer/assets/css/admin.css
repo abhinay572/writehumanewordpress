@@ -1,0 +1,306 @@
+/* WriteHumane Admin Styles */
+
+.whah-wrap {
+    max-width: 1200px;
+}
+
+.whah-wrap h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* Stat Cards Grid */
+.whah-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.whah-stat-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.whah-stat-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+}
+
+.whah-stat-primary .whah-stat-label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.whah-stat-primary .whah-stat-sub {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.whah-stat-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.whah-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.whah-stat-sub {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+}
+
+/* Progress Bar */
+.whah-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.whah-progress-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Cards */
+.whah-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.whah-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px;
+    padding: 0;
+}
+
+.whah-card-desc {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* Tables */
+.whah-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.whah-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #eee;
+}
+
+.whah-table td {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.whah-table tbody tr:hover {
+    background: #f9f9ff;
+}
+
+.whah-table-full {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Mode Badges */
+.whah-mode-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.whah-mode-light {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.whah-mode-balanced {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.whah-mode-aggressive {
+    background: #fce7f3;
+    color: #be185d;
+}
+
+.whah-role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: #f0f0f0;
+    color: #555;
+}
+
+/* Chart */
+.whah-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 160px;
+    padding-top: 20px;
+}
+
+.whah-chart-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.whah-chart-bar {
+    width: 100%;
+    background: linear-gradient(180deg, #6366f1, #8b5cf6);
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    position: relative;
+    transition: height 0.3s ease;
+}
+
+.whah-chart-bar:hover {
+    opacity: 0.85;
+}
+
+.whah-chart-value {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.whah-chart-label {
+    font-size: 11px;
+    color: #999;
+    margin-top: 6px;
+}
+
+/* Checklist */
+.whah-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.whah-checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.whah-checklist li:last-child {
+    border-bottom: none;
+}
+
+.whah-checklist li::before {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-size: 16px;
+}
+
+.whah-check-ok::before {
+    content: "✅";
+}
+
+.whah-check-fail::before {
+    content: "❌";
+}
+
+.whah-check-off::before {
+    content: "⬜";
+}
+
+/* Pagination */
+.whah-pagination {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    justify-content: center;
+}
+
+.whah-page-info {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Empty state */
+.whah-empty {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.whah-log-summary {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+/* Test result */
+.whah-test-success {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.whah-test-error {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* Form tables inside cards */
+.whah-card .form-table th {
+    padding-left: 0;
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .whah-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .whah-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
