@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  UNLIMITED
+}
+
+model User {
+  id                    String     @id @default(cuid())
+  email                 String     @unique
+  password              String
+  name                  String?
+  plan                  Plan       @default(FREE)
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  planExpiresAt         DateTime?
+  wordCredits           Int        @default(1000)
+  wordsUsedThisMonth    Int        @default(0)
+  creditResetAt         DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  apiKeys   ApiKey[]
+  usageLogs UsageLog[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  key        String    @unique
+  name       String    @default("Default")
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model UsageLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputWords Int
+  outputWords Int
+  mode       String
+  provider   String
+  model      String?
+  latencyMs  Int?
+  success    Boolean
+  errorMsg   String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+}
