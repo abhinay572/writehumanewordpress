@@ -8,19 +8,19 @@ const db = admin.firestore();
 const corsHandler = cors({ origin: true });
 
 // ============================================================
-// AUTH HELPERS
+// AUTH HELPERS (using .env instead of deprecated functions.config())
 // ============================================================
 
 function verifyPluginKey(req) {
   const auth = req.headers.authorization || "";
   const key = auth.replace("Bearer ", "");
-  return key === functions.config().app.plugin_key;
+  return key === process.env.PLUGIN_KEY;
 }
 
 function verifyAdminKey(req) {
   const auth = req.headers.authorization || "";
   const key = auth.replace("Bearer ", "");
-  return key === functions.config().app.admin_secret;
+  return key === process.env.ADMIN_SECRET;
 }
 
 function getMonthStart() {
