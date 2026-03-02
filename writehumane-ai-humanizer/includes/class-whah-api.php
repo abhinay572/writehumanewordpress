@@ -166,7 +166,9 @@ OUTPUT ONLY the rewritten text. No explanations, no meta-commentary, no preamble
         );
 
         // Non-blocking request — don't slow down the user
-        wp_remote_post( trailingslashit( $backend_url ) . 'api/track', array(
+        // Backend URL should be the full Firebase function URL e.g.
+        // https://us-central1-writehumanewordpress.cloudfunctions.net/track
+        wp_remote_post( $backend_url, array(
             'timeout'  => 5,
             'blocking' => false,
             'headers'  => array(

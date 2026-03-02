@@ -498,8 +498,8 @@ class WHAH_Admin {
                             <td>
                                 <input type="url" name="whah_backend_url" id="whah_backend_url"
                                     value="<?php echo esc_attr( get_option( 'whah_backend_url', '' ) ); ?>"
-                                    class="regular-text" placeholder="https://your-backend.vercel.app" />
-                                <p class="description"><?php esc_html_e( 'Your Vercel backend URL where user data is stored.', 'writehumane-ai-humanizer' ); ?></p>
+                                    class="regular-text" placeholder="https://us-central1-writehumanewordpress.cloudfunctions.net/track" />
+                                <p class="description"><?php esc_html_e( 'Your Firebase Cloud Function URL for the track endpoint.', 'writehumane-ai-humanizer' ); ?></p>
                             </td>
                         </tr>
                         <tr>
@@ -508,7 +508,7 @@ class WHAH_Admin {
                                 <input type="password" name="whah_backend_key" id="whah_backend_key"
                                     value="<?php echo esc_attr( get_option( 'whah_backend_key', '' ) ); ?>"
                                     class="regular-text" autocomplete="off" />
-                                <p class="description"><?php esc_html_e( 'The PLUGIN_API_KEY from your backend .env file.', 'writehumane-ai-humanizer' ); ?></p>
+                                <p class="description"><?php esc_html_e( 'The PLUGIN_API_KEY you set in Firebase Functions config.', 'writehumane-ai-humanizer' ); ?></p>
                             </td>
                         </tr>
                     </table>
