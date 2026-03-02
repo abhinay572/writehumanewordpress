@@ -1,0 +1,79 @@
+.whah-gutenberg-panel .components-button.is-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    width: 100%;
+    justify-content: center;
+}
+
+.whah-gutenberg-panel .components-button.is-primary:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+
+.whah-gutenberg-panel .components-button.is-secondary {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.whah-gutenberg-panel .whah-result-preview {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 13px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.whah-gutenberg-panel .whah-word-change {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.whah-gutenberg-panel .whah-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 10px;
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.whah-gutenberg-panel .whah-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: whah-spin 0.6s linear infinite;
+    margin-right: 8px;
+}
+
+/* Classic editor meta box */
+#whah-classic-status .whah-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    padding: 8px;
+    color: #059669;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+#whah-classic-status .whah-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    padding: 8px;
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+@keyframes whah-spin {
+    to { transform: rotate(360deg); }
+}
