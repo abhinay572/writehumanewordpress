@@ -1,12 +1,13 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/api/index" },
+    { "source": "/dashboard", "destination": "/public/index.html" },
     { "source": "/track", "destination": "/api/track" },
     { "source": "/admin-stats", "destination": "/api/admin-stats" },
     { "source": "/admin-users", "destination": "/api/admin-users" },
     { "source": "/admin-logs", "destination": "/api/admin-logs" },
-    { "source": "/admin-export", "destination": "/api/admin-export" }
+    { "source": "/admin-export", "destination": "/api/admin-export" },
+    { "source": "/", "destination": "/api/index" }
   ],
   "headers": [
     {

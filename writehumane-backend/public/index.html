@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WriteHumane Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: 600; }
+    .stat-card { transition: transform 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .loading-spinner {
+      border: 3px solid #e5e7eb; border-top: 3px solid #6366f1;
+      border-radius: 50%; width: 32px; height: 32px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">WriteHumane</h1>
+        <p class="text-gray-500 mt-1">Admin Dashboard</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Backend URL</label>
+          <input id="loginUrl" type="url" placeholder="https://your-backend.vercel.app"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Admin Secret Key</label>
+          <input id="loginKey" type="password" placeholder="Enter your ADMIN_SECRET"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+        </div>
+        <button onclick="doLogin()" id="loginBtn"
+          class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition">
+          Sign In
+        </button>
+        <p id="loginError" class="text-red-500 text-sm text-center hidden"></p>
+      </div>
+      <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+        <p class="text-xs text-gray-500">Use the <code class="bg-gray-200 px-1 rounded">ADMIN_SECRET</code> environment variable from your Vercel backend deployment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <!-- Top Nav -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center gap-3">
+            <h1 class="text-xl font-bold text-gray-900">WriteHumane</h1>
+            <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">Admin</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span id="connectedUrl" class="text-sm text-gray-500"></span>
+            <button onclick="doLogout()" class="text-sm text-gray-500 hover:text-red-600 transition">Logout</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Tabs -->
+    <div class="bg-white border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex gap-8" id="tabBar">
+          <button onclick="switchTab('overview')" data-tab="overview" class="py-3 text-sm tab-active">Overview</button>
+          <button onclick="switchTab('users')" data-tab="users" class="py-3 text-sm text-gray-500 hover:text-gray-700">Users</button>
+          <button onclick="switchTab('sites')" data-tab="sites" class="py-3 text-sm text-gray-500 hover:text-gray-700">Sites</button>
+          <button onclick="switchTab('logs')" data-tab="logs" class="py-3 text-sm text-gray-500 hover:text-gray-700">Usage Logs</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- Overview Tab -->
+      <div id="tab-overview">
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="stat-card bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <p class="text-sm text-gray-500">Total Users</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1" id="statTotalUsers">-</p>
+            <p class="text-xs text-green-600 mt-2"><span id="statNewUsers">0</span> new this month</p>
+          </div>
+          <div class="stat-card bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <p class="text-sm text-gray-500">Total Words Processed</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1" id="statTotalWords">-</p>
+            <p class="text-xs text-blue-600 mt-2"><span id="statMonthWords">0</span> this month</p>
+          </div>
+          <div class="stat-card bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <p class="text-sm text-gray-500">Total Requests</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1" id="statTotalRequests">-</p>
+            <p class="text-xs text-purple-600 mt-2"><span id="statMonthRequests">0</span> this month</p>
+          </div>
+          <div class="stat-card bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <p class="text-sm text-gray-500">Active Sites</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1" id="statTotalSites">-</p>
+            <p class="text-xs text-orange-600 mt-2"><span id="statActiveUsers">0</span> active users this month</p>
+          </div>
+        </div>
+
+        <!-- Today Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-sm p-6 text-white">
+            <p class="text-sm opacity-80">Today's Activity</p>
+            <div class="flex items-end gap-6 mt-3">
+              <div>
+                <p class="text-3xl font-bold" id="statTodayWords">0</p>
+                <p class="text-sm opacity-70">words</p>
+              </div>
+              <div>
+                <p class="text-3xl font-bold" id="statTodayRequests">0</p>
+                <p class="text-sm opacity-70">requests</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <p class="text-sm text-gray-500 mb-3">Mode Breakdown (This Month)</p>
+            <div id="modeBreakdown" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h3 class="font-semibold text-gray-900 mb-4">Daily Words (Last 30 Days)</h3>
+            <canvas id="chartWords" height="200"></canvas>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h3 class="font-semibold text-gray-900 mb-4">Daily Requests (Last 30 Days)</h3>
+            <canvas id="chartRequests" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Users -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-5 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-900">Top Users This Month</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">User</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Site</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Role</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Words This Month</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">All Time Words</th>
+                </tr>
+              </thead>
+              <tbody id="topUsersBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="tab-users" class="hidden">
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+          <input id="userSearch" type="text" placeholder="Search by email or name..."
+            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            oninput="debounce(loadUsers, 400)()" />
+          <select id="userSort" onchange="loadUsers()"
+            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            <option value="recent">Most Recent</option>
+            <option value="words">Most Words</option>
+            <option value="requests">Most Requests</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+          <button onclick="exportUsers('csv')" class="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition text-sm">
+            Export CSV
+          </button>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Email</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Name</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Site</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Role</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Words (Month)</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Words (Total)</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Requests</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">First Seen</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Last Active</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+          <div class="p-4 border-t border-gray-100 text-sm text-gray-500">
+            <span id="usersCount">0</span> users total
+          </div>
+        </div>
+      </div>
+
+      <!-- Sites Tab -->
+      <div id="tab-sites" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Site URL</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Site Name</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">WP Version</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Plugin Version</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Total Words</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Total Requests</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Last Active</th>
+                </tr>
+              </thead>
+              <tbody id="sitesBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs Tab -->
+      <div id="tab-logs" class="hidden">
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+          <input id="logEmail" type="text" placeholder="Filter by email..."
+            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input id="logSite" type="text" placeholder="Filter by site..."
+            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <select id="logMode"
+            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            <option value="">All Modes</option>
+            <option value="light">Light</option>
+            <option value="balanced">Balanced</option>
+            <option value="aggressive">Aggressive</option>
+          </select>
+          <select id="logLimit"
+            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            <option value="50">50 rows</option>
+            <option value="100">100 rows</option>
+            <option value="200">200 rows</option>
+          </select>
+          <button onclick="loadLogs()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition text-sm">
+            Search
+          </button>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Time</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">User</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Site</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Mode</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Tone</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">In Words</th>
+                  <th class="text-right text-xs font-medium text-gray-500 px-5 py-3">Out Words</th>
+                  <th class="text-left text-xs font-medium text-gray-500 px-5 py-3">Post</th>
+                </tr>
+              </thead>
+              <tbody id="logsBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+          <div class="p-4 border-t border-gray-100 text-sm text-gray-500">
+            <span id="logsCount">0</span> logs shown
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/70 z-[90] flex items-center justify-center">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <script>
+    // State
+    let API_URL = localStorage.getItem('wh_admin_url') || '';
+    let API_KEY = localStorage.getItem('wh_admin_key') || '';
+    let wordsChart = null;
+    let requestsChart = null;
+
+    // Init
+    if (API_URL && API_KEY) {
+      showDashboard();
+    }
+
+    // Auth
+    async function doLogin() {
+      const url = document.getElementById('loginUrl').value.trim().replace(/\/+$/, '');
+      const key = document.getElementById('loginKey').value.trim();
+      const errEl = document.getElementById('loginError');
+      errEl.classList.add('hidden');
+
+      if (!url || !key) { errEl.textContent = 'Both fields are required'; errEl.classList.remove('hidden'); return; }
+
+      document.getElementById('loginBtn').disabled = true;
+      document.getElementById('loginBtn').textContent = 'Connecting...';
+
+      try {
+        const resp = await fetch(`${url}/admin-stats`, { headers: { Authorization: `Bearer ${key}` } });
+        if (!resp.ok) throw new Error('Invalid credentials');
+        API_URL = url; API_KEY = key;
+        localStorage.setItem('wh_admin_url', url);
+        localStorage.setItem('wh_admin_key', key);
+        showDashboard();
+      } catch (e) {
+        errEl.textContent = e.message || 'Connection failed';
+        errEl.classList.remove('hidden');
+      } finally {
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').textContent = 'Sign In';
+      }
+    }
+
+    function doLogout() {
+      localStorage.removeItem('wh_admin_url');
+      localStorage.removeItem('wh_admin_key');
+      API_URL = ''; API_KEY = '';
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    async function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('connectedUrl').textContent = API_URL.replace(/https?:\/\//, '');
+      await loadOverview();
+    }
+
+    // API Helper
+    async function apiFetch(endpoint, params = {}) {
+      const url = new URL(`${API_URL}/${endpoint}`);
+      Object.entries(params).forEach(([k, v]) => { if (v) url.searchParams.set(k, v); });
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } });
+      if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+      return resp.json();
+    }
+
+    // Tabs
+    function switchTab(tab) {
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-gray-500');
+      });
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('tab-active');
+      document.querySelector(`[data-tab="${tab}"]`).classList.remove('text-gray-500');
+
+      ['overview', 'users', 'sites', 'logs'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+      });
+
+      if (tab === 'users') loadUsers();
+      if (tab === 'logs') loadLogs();
+      if (tab === 'overview') loadOverview();
+    }
+
+    // Format helpers
+    function fmtNum(n) { return (n || 0).toLocaleString(); }
+    function fmtDate(d) {
+      if (!d) return '-';
+      const date = d._seconds ? new Date(d._seconds * 1000) : new Date(d);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtShortDate(d) {
+      if (!d) return '-';
+      const date = d._seconds ? new Date(d._seconds * 1000) : new Date(d);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Overview
+    async function loadOverview() {
+      showLoading();
+      try {
+        const data = await apiFetch('admin-stats');
+
+        document.getElementById('statTotalUsers').textContent = fmtNum(data.all_time.total_users);
+        document.getElementById('statTotalWords').textContent = fmtNum(data.all_time.total_words);
+        document.getElementById('statTotalRequests').textContent = fmtNum(data.all_time.total_requests);
+        document.getElementById('statTotalSites').textContent = fmtNum(data.all_time.total_sites);
+        document.getElementById('statNewUsers').textContent = fmtNum(data.this_month.new_users);
+        document.getElementById('statMonthWords').textContent = fmtNum(data.this_month.words);
+        document.getElementById('statMonthRequests').textContent = fmtNum(data.this_month.requests);
+        document.getElementById('statActiveUsers').textContent = fmtNum(data.this_month.active_users);
+        document.getElementById('statTodayWords').textContent = fmtNum(data.today.words);
+        document.getElementById('statTodayRequests').textContent = fmtNum(data.today.requests);
+
+        // Mode breakdown
+        const modeEl = document.getElementById('modeBreakdown');
+        const totalModeReqs = data.mode_breakdown.reduce((s, m) => s + m.requests, 0) || 1;
+        modeEl.innerHTML = data.mode_breakdown.map(m => {
+          const pct = Math.round((m.requests / totalModeReqs) * 100);
+          const colors = { light: 'bg-green-500', balanced: 'bg-blue-500', aggressive: 'bg-red-500' };
+          return `<div class="flex items-center gap-3">
+            <span class="text-sm text-gray-600 w-20 capitalize">${m.mode}</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2"><div class="${colors[m.mode] || 'bg-gray-400'} h-2 rounded-full" style="width:${pct}%"></div></div>
+            <span class="text-sm text-gray-500 w-16 text-right">${pct}%</span>
+          </div>`;
+        }).join('') || '<p class="text-sm text-gray-400">No data yet</p>';
+
+        // Charts
+        renderCharts(data.daily_chart);
+
+        // Top users
+        const tbody = document.getElementById('topUsersBody');
+        tbody.innerHTML = data.top_users.map(u => `<tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-sm">${u.email || '-'}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${u.site_url || '-'}</td>
+          <td class="px-5 py-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded capitalize">${u.wp_role || '-'}</span></td>
+          <td class="px-5 py-3 text-sm text-right font-medium">${fmtNum(u.words_this_month)}</td>
+          <td class="px-5 py-3 text-sm text-right text-gray-500">${fmtNum(u.total_words)}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="px-5 py-8 text-center text-gray-400">No data yet</td></tr>';
+
+        // Sites table
+        const sitesBody = document.getElementById('sitesBody');
+        sitesBody.innerHTML = data.sites.map(s => `<tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-sm font-medium text-indigo-600">${s.site_url || '-'}</td>
+          <td class="px-5 py-3 text-sm">${s.site_name || '-'}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${s.wp_version || '-'}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${s.plugin_version || '-'}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(s.total_words)}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(s.total_requests)}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${fmtDate(s.last_active)}</td>
+        </tr>`).join('') || '<tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">No sites yet</td></tr>';
+
+      } catch (e) {
+        showToast('Failed to load stats: ' + e.message, 'error');
+      }
+      hideLoading();
+    }
+
+    function renderCharts(dailyData) {
+      const labels = dailyData.map(d => d.day.slice(5)); // MM-DD
+      const wordsData = dailyData.map(d => d.words);
+      const reqsData = dailyData.map(d => d.requests);
+      const chartOpts = {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, grid: { color: '#f3f4f6' } }
+        }
+      };
+
+      if (wordsChart) wordsChart.destroy();
+      wordsChart = new Chart(document.getElementById('chartWords'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ data: wordsData, backgroundColor: '#818cf8', borderRadius: 4 }]
+        },
+        options: chartOpts
+      });
+
+      if (requestsChart) requestsChart.destroy();
+      requestsChart = new Chart(document.getElementById('chartRequests'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ data: reqsData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.3 }]
+        },
+        options: chartOpts
+      });
+    }
+
+    // Users
+    async function loadUsers() {
+      showLoading();
+      try {
+        const data = await apiFetch('admin-users', {
+          search: document.getElementById('userSearch').value,
+          sort: document.getElementById('userSort').value
+        });
+        const tbody = document.getElementById('usersBody');
+        tbody.innerHTML = data.users.map(u => `<tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-sm font-medium">${u.email || '-'}</td>
+          <td class="px-5 py-3 text-sm">${u.display_name || '-'}</td>
+          <td class="px-5 py-3 text-sm text-indigo-600">${u.site_url || '-'}</td>
+          <td class="px-5 py-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded capitalize">${u.wp_role || '-'}</span></td>
+          <td class="px-5 py-3 text-sm text-right font-medium">${fmtNum(u.words_this_month)}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(u.total_words)}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(u.total_requests)}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${fmtShortDate(u.first_seen)}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${fmtShortDate(u.last_active)}</td>
+        </tr>`).join('') || '<tr><td colspan="9" class="px-5 py-8 text-center text-gray-400">No users found</td></tr>';
+        document.getElementById('usersCount').textContent = fmtNum(data.total);
+      } catch (e) {
+        showToast('Failed to load users: ' + e.message, 'error');
+      }
+      hideLoading();
+    }
+
+    // Logs
+    async function loadLogs() {
+      showLoading();
+      try {
+        const data = await apiFetch('admin-logs', {
+          email: document.getElementById('logEmail').value,
+          site: document.getElementById('logSite').value,
+          mode: document.getElementById('logMode').value,
+          limit: document.getElementById('logLimit').value
+        });
+        const tbody = document.getElementById('logsBody');
+        tbody.innerHTML = data.logs.map(l => `<tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-sm text-gray-500">${fmtDate(l.created_at)}</td>
+          <td class="px-5 py-3 text-sm">${l.user_email || '-'}</td>
+          <td class="px-5 py-3 text-sm text-indigo-600">${l.site_url || '-'}</td>
+          <td class="px-5 py-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded capitalize">${l.mode || '-'}</span></td>
+          <td class="px-5 py-3 text-sm capitalize">${l.tone || '-'}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(l.input_words)}</td>
+          <td class="px-5 py-3 text-sm text-right">${fmtNum(l.output_words)}</td>
+          <td class="px-5 py-3 text-sm text-gray-500">${l.post_title || (l.post_id ? `#${l.post_id}` : '-')}</td>
+        </tr>`).join('') || '<tr><td colspan="8" class="px-5 py-8 text-center text-gray-400">No logs found</td></tr>';
+        document.getElementById('logsCount').textContent = fmtNum(data.total);
+      } catch (e) {
+        showToast('Failed to load logs: ' + e.message, 'error');
+      }
+      hideLoading();
+    }
+
+    // Export
+    function exportUsers(format) {
+      const url = `${API_URL}/admin-export?format=${format}`;
+      const a = document.createElement('a');
+      // Need to fetch with auth header for CSV download
+      fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+        .then(r => r.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          a.href = blobUrl;
+          a.download = `writehumane-users.${format}`;
+          a.click();
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(e => showToast('Export failed: ' + e.message, 'error'));
+    }
+
+    // Utility
+    function showLoading() { document.getElementById('loadingOverlay').classList.remove('hidden'); }
+    function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const colors = { info: 'bg-blue-600', error: 'bg-red-600', success: 'bg-green-600' };
+      const el = document.createElement('div');
+      el.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg text-sm max-w-sm`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+
+    function debounce(fn, ms) {
+      let timer;
+      return function (...args) { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+    }
+
+    // Enter key login
+    document.getElementById('loginKey').addEventListener('keyup', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+</body>
+</html>
