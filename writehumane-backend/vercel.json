@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/track", "destination": "/api/track" },
+    { "source": "/admin-stats", "destination": "/api/admin-stats" },
+    { "source": "/admin-users", "destination": "/api/admin-users" },
+    { "source": "/admin-logs", "destination": "/api/admin-logs" },
+    { "source": "/admin-export", "destination": "/api/admin-export" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type,Authorization" }
+      ]
+    }
+  ]
+}
