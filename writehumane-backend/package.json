@@ -1,0 +1,12 @@
+{
+  "name": "writehumane-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WriteHumane centralized tracking backend on Vercel",
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
