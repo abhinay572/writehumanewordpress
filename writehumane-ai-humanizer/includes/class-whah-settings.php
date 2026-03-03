@@ -81,6 +81,21 @@ class WHAH_Settings {
         register_setting( 'whah_settings', 'whah_backend_key', array(
             'sanitize_callback' => 'sanitize_text_field',
         ) );
+
+        // Domain Connection (separate settings group for Connect page)
+        register_setting( 'whah_domain_settings', 'whah_domain_url', array(
+            'sanitize_callback' => 'esc_url_raw',
+        ) );
+        register_setting( 'whah_domain_settings', 'whah_domain_api_key', array(
+            'sanitize_callback' => 'sanitize_text_field',
+        ) );
+        register_setting( 'whah_domain_settings', 'whah_domain_status', array(
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => 'disconnected',
+        ) );
+        register_setting( 'whah_domain_settings', 'whah_domain_last_check', array(
+            'sanitize_callback' => 'sanitize_text_field',
+        ) );
     }
 
     public function sanitize_roles( $input ) {

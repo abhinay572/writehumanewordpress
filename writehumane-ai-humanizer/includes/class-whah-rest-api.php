@@ -54,6 +54,18 @@ class WHAH_Rest_API {
             'callback'            => array( $this, 'get_admin_logs' ),
             'permission_callback' => array( $this, 'check_admin_permission' ),
         ) );
+
+        register_rest_route( 'writehumane/v1', '/domain/test', array(
+            'methods'             => 'POST',
+            'callback'            => array( $this, 'test_domain_connection' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
+
+        register_rest_route( 'writehumane/v1', '/domain/disconnect', array(
+            'methods'             => 'POST',
+            'callback'            => array( $this, 'disconnect_domain' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
     }
 
     public function check_permission() {
@@ -157,5 +169,78 @@ class WHAH_Rest_API {
         }
         $tracker = WHAH_Usage_Tracker::instance();
         return rest_ensure_response( $tracker->get_recent_logs( $page ) );
+    }
+
+    /**
+     * POST /writehumane/v1/domain/test — test domain connection
+     */
+    public function test_domain_connection( $request ) {
+        $url = $request->get_param( 'url' );
+        $key = $request->get_param( 'key' );
+
+        if ( empty( $url ) ) {
+            $url = get_option( 'whah_domain_url', '' );
+        }
+        if ( empty( $key ) ) {
+            $key = get_option( 'whah_domain_api_key', '' );
+        }
+
+        if ( empty( $url ) ) {
+            return new WP_Error( 'missing_url', __( 'Please enter a domain URL.', 'writehumane-ai-humanizer' ), array( 'status' => 400 ) );
+        }
+
+        $response = wp_remote_post( $url, array(
+            'timeout' => 15,
+            'headers' => array(
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $key,
+            ),
+            'body' => wp_json_encode( array(
+                'action'   => 'ping',
+                'site_url' => home_url(),
+            ) ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            update_option( 'whah_domain_status', 'disconnected' );
+            return rest_ensure_response( array(
+                'success' => false,
+                'message' => $response->get_error_message(),
+            ) );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+
+        if ( $code >= 200 && $code < 300 ) {
+            update_option( 'whah_domain_status', 'connected' );
+            update_option( 'whah_domain_last_check', current_time( 'mysql' ) );
+            return rest_ensure_response( array(
+                'success' => true,
+                'message' => __( 'Connection successful! Domain is reachable.', 'writehumane-ai-humanizer' ),
+                'code'    => $code,
+            ) );
+        }
+
+        update_option( 'whah_domain_status', 'disconnected' );
+        return rest_ensure_response( array(
+            'success' => false,
+            'message' => sprintf(
+                __( 'Domain returned HTTP %d. Please check the URL and API key.', 'writehumane-ai-humanizer' ),
+                $code
+            ),
+            'code' => $code,
+        ) );
+    }
+
+    /**
+     * POST /writehumane/v1/domain/disconnect — disconnect domain
+     */
+    public function disconnect_domain() {
+        update_option( 'whah_domain_status', 'disconnected' );
+        update_option( 'whah_domain_last_check', '' );
+        return rest_ensure_response( array(
+            'success' => true,
+            'message' => __( 'Domain disconnected.', 'writehumane-ai-humanizer' ),
+        ) );
     }
 }

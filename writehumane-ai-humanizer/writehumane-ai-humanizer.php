@@ -97,6 +97,10 @@ final class WriteHumane_AI_Humanizer {
             'whah_brand_name'         => 'WriteHumane',
             'whah_backend_url'        => '',
             'whah_backend_key'        => '',
+            'whah_domain_url'         => '',
+            'whah_domain_api_key'     => '',
+            'whah_domain_status'      => 'disconnected',
+            'whah_domain_last_check'  => '',
         );
 
         foreach ( $defaults as $key => $value ) {

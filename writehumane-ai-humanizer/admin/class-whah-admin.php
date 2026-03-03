@@ -61,6 +61,16 @@ class WHAH_Admin {
             array( $this, 'render_logs' )
         );
 
+        // Sub: Connect Domain
+        add_submenu_page(
+            'whah-dashboard',
+            __( 'Connect Domain', 'writehumane-ai-humanizer' ),
+            __( 'Connect Domain', 'writehumane-ai-humanizer' ),
+            'manage_options',
+            'whah-connect',
+            array( $this, 'render_connect' )
+        );
+
         // Sub: Settings
         add_submenu_page(
             'whah-dashboard',
@@ -341,6 +351,195 @@ class WHAH_Admin {
                     <p class="whah-empty"><?php esc_html_e( 'No logs yet. Requests will appear here as users humanize content.', 'writehumane-ai-humanizer' ); ?></p>
                 </div>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * CONNECT DOMAIN PAGE — connect and manage external domain
+     */
+    public function render_connect() {
+        $domain_url    = get_option( 'whah_domain_url', '' );
+        $domain_key    = get_option( 'whah_domain_api_key', '' );
+        $domain_status = get_option( 'whah_domain_status', 'disconnected' );
+        $domain_last   = get_option( 'whah_domain_last_check', '' );
+        $site_url      = home_url();
+        $site_name     = get_bloginfo( 'name' );
+        $wp_version    = get_bloginfo( 'version' );
+        $is_connected  = ( 'connected' === $domain_status && ! empty( $domain_url ) );
+        ?>
+        <div class="wrap whah-wrap">
+            <div class="whah-connect-header">
+                <div class="whah-connect-header-text">
+                    <h1><?php esc_html_e( 'Connect Domain', 'writehumane-ai-humanizer' ); ?></h1>
+                    <p class="whah-connect-subtitle"><?php esc_html_e( 'Link this WordPress site to your WriteHumane backend domain for centralized tracking, analytics, and license management.', 'writehumane-ai-humanizer' ); ?></p>
+                </div>
+                <div class="whah-connect-status-pill <?php echo $is_connected ? 'whah-pill-connected' : 'whah-pill-disconnected'; ?>">
+                    <span class="whah-pill-dot"></span>
+                    <?php echo $is_connected ? esc_html__( 'Connected', 'writehumane-ai-humanizer' ) : esc_html__( 'Not Connected', 'writehumane-ai-humanizer' ); ?>
+                </div>
+            </div>
+
+            <!-- Connection Status Card -->
+            <div class="whah-connect-grid">
+                <div class="whah-connect-main">
+                    <!-- Domain Connection Form -->
+                    <div class="whah-card whah-card-connect">
+                        <div class="whah-card-header">
+                            <span class="dashicons dashicons-admin-links whah-card-icon"></span>
+                            <div>
+                                <h2><?php esc_html_e( 'Domain Configuration', 'writehumane-ai-humanizer' ); ?></h2>
+                                <p class="whah-card-desc"><?php esc_html_e( 'Enter your WriteHumane backend domain URL and API key to establish the connection.', 'writehumane-ai-humanizer' ); ?></p>
+                            </div>
+                        </div>
+
+                        <form method="post" action="options.php" id="whah-connect-form">
+                            <?php settings_fields( 'whah_domain_settings' ); ?>
+
+                            <div class="whah-field-group">
+                                <label for="whah_domain_url" class="whah-field-label">
+                                    <?php esc_html_e( 'Domain URL', 'writehumane-ai-humanizer' ); ?>
+                                    <span class="whah-required">*</span>
+                                </label>
+                                <div class="whah-input-wrap">
+                                    <span class="whah-input-icon dashicons dashicons-admin-site-alt3"></span>
+                                    <input type="url" name="whah_domain_url" id="whah_domain_url"
+                                        value="<?php echo esc_attr( $domain_url ); ?>"
+                                        class="whah-input" placeholder="https://your-domain.com" />
+                                </div>
+                                <p class="whah-field-hint"><?php esc_html_e( 'The full URL of your WriteHumane backend (e.g. your Firebase Cloud Function or custom API endpoint).', 'writehumane-ai-humanizer' ); ?></p>
+                            </div>
+
+                            <div class="whah-field-group">
+                                <label for="whah_domain_api_key" class="whah-field-label">
+                                    <?php esc_html_e( 'API Key', 'writehumane-ai-humanizer' ); ?>
+                                    <span class="whah-required">*</span>
+                                </label>
+                                <div class="whah-input-wrap">
+                                    <span class="whah-input-icon dashicons dashicons-lock"></span>
+                                    <input type="password" name="whah_domain_api_key" id="whah_domain_api_key"
+                                        value="<?php echo esc_attr( $domain_key ); ?>"
+                                        class="whah-input" placeholder="Enter your API key" autocomplete="off" />
+                                    <button type="button" class="whah-toggle-pass" title="<?php esc_attr_e( 'Show/Hide', 'writehumane-ai-humanizer' ); ?>">
+                                        <span class="dashicons dashicons-visibility"></span>
+                                    </button>
+                                </div>
+                                <p class="whah-field-hint"><?php esc_html_e( 'Your secret API key for authenticating with the backend domain.', 'writehumane-ai-humanizer' ); ?></p>
+                            </div>
+
+                            <div class="whah-connect-actions">
+                                <?php submit_button( __( 'Save Connection', 'writehumane-ai-humanizer' ), 'primary whah-btn-save', 'submit', false ); ?>
+                                <button type="button" id="whah-test-domain-btn" class="button whah-btn-test">
+                                    <span class="dashicons dashicons-update whah-btn-icon"></span>
+                                    <?php esc_html_e( 'Test Connection', 'writehumane-ai-humanizer' ); ?>
+                                </button>
+                            </div>
+
+                            <!-- Test Result -->
+                            <div id="whah-domain-test-result" class="whah-test-result-box" style="display:none;"></div>
+                        </form>
+                    </div>
+
+                    <!-- Connection Log -->
+                    <?php if ( $is_connected ) : ?>
+                    <div class="whah-card">
+                        <div class="whah-card-header">
+                            <span class="dashicons dashicons-yes-alt whah-card-icon whah-icon-success"></span>
+                            <div>
+                                <h2><?php esc_html_e( 'Connection Active', 'writehumane-ai-humanizer' ); ?></h2>
+                                <p class="whah-card-desc"><?php esc_html_e( 'Your site is successfully sending usage data to the connected domain.', 'writehumane-ai-humanizer' ); ?></p>
+                            </div>
+                        </div>
+                        <div class="whah-connection-details">
+                            <div class="whah-detail-row">
+                                <span class="whah-detail-label"><?php esc_html_e( 'Connected Domain', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-detail-value">
+                                    <code><?php echo esc_html( wp_parse_url( $domain_url, PHP_URL_HOST ) ); ?></code>
+                                </span>
+                            </div>
+                            <?php if ( $domain_last ) : ?>
+                            <div class="whah-detail-row">
+                                <span class="whah-detail-label"><?php esc_html_e( 'Last Verified', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-detail-value"><?php echo esc_html( human_time_diff( strtotime( $domain_last ) ) . ' ago' ); ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <div class="whah-detail-row">
+                                <span class="whah-detail-label"><?php esc_html_e( 'Data Sent', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-detail-value"><?php esc_html_e( 'Usage stats, user info, site analytics', 'writehumane-ai-humanizer' ); ?></span>
+                            </div>
+                        </div>
+                        <div class="whah-connect-actions" style="margin-top:16px;">
+                            <button type="button" id="whah-disconnect-btn" class="button whah-btn-disconnect">
+                                <span class="dashicons dashicons-dismiss whah-btn-icon"></span>
+                                <?php esc_html_e( 'Disconnect', 'writehumane-ai-humanizer' ); ?>
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="whah-connect-sidebar">
+                    <!-- Site Info Card -->
+                    <div class="whah-card whah-card-info">
+                        <h2>
+                            <span class="dashicons dashicons-wordpress whah-card-icon-sm"></span>
+                            <?php esc_html_e( 'Site Information', 'writehumane-ai-humanizer' ); ?>
+                        </h2>
+                        <div class="whah-info-list">
+                            <div class="whah-info-item">
+                                <span class="whah-info-label"><?php esc_html_e( 'Site Name', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-info-value"><?php echo esc_html( $site_name ); ?></span>
+                            </div>
+                            <div class="whah-info-item">
+                                <span class="whah-info-label"><?php esc_html_e( 'Site URL', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-info-value"><code><?php echo esc_html( $site_url ); ?></code></span>
+                            </div>
+                            <div class="whah-info-item">
+                                <span class="whah-info-label"><?php esc_html_e( 'WordPress', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-info-value"><?php echo esc_html( $wp_version ); ?></span>
+                            </div>
+                            <div class="whah-info-item">
+                                <span class="whah-info-label"><?php esc_html_e( 'PHP', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-info-value"><?php echo esc_html( PHP_VERSION ); ?></span>
+                            </div>
+                            <div class="whah-info-item">
+                                <span class="whah-info-label"><?php esc_html_e( 'Plugin', 'writehumane-ai-humanizer' ); ?></span>
+                                <span class="whah-info-value">v<?php echo esc_html( WHAH_VERSION ); ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- How It Works Card -->
+                    <div class="whah-card whah-card-help">
+                        <h2>
+                            <span class="dashicons dashicons-info-outline whah-card-icon-sm"></span>
+                            <?php esc_html_e( 'How It Works', 'writehumane-ai-humanizer' ); ?>
+                        </h2>
+                        <ol class="whah-steps-list">
+                            <li><?php esc_html_e( 'Enter your backend domain URL below.', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><?php esc_html_e( 'Add your API key for authentication.', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><?php esc_html_e( 'Click "Test Connection" to verify.', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><?php esc_html_e( 'Save to start sending usage data.', 'writehumane-ai-humanizer' ); ?></li>
+                        </ol>
+                    </div>
+
+                    <!-- Data Sent Card -->
+                    <div class="whah-card">
+                        <h2>
+                            <span class="dashicons dashicons-shield whah-card-icon-sm"></span>
+                            <?php esc_html_e( 'Data We Send', 'writehumane-ai-humanizer' ); ?>
+                        </h2>
+                        <ul class="whah-data-list">
+                            <li><span class="dashicons dashicons-admin-users whah-data-icon"></span> <?php esc_html_e( 'User email, name & role', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><span class="dashicons dashicons-chart-bar whah-data-icon"></span> <?php esc_html_e( 'Word counts & request stats', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><span class="dashicons dashicons-admin-site whah-data-icon"></span> <?php esc_html_e( 'Site URL & WordPress version', 'writehumane-ai-humanizer' ); ?></li>
+                            <li><span class="dashicons dashicons-admin-settings whah-data-icon"></span> <?php esc_html_e( 'Mode & tone used per request', 'writehumane-ai-humanizer' ); ?></li>
+                        </ul>
+                        <p class="whah-card-desc" style="margin-top:12px;margin-bottom:0;"><?php esc_html_e( 'All data is sent non-blocking in the background. It does not slow down users.', 'writehumane-ai-humanizer' ); ?></p>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
     }

@@ -22,6 +22,10 @@ $options = array(
     'whah_brand_name',
     'whah_backend_url',
     'whah_backend_key',
+    'whah_domain_url',
+    'whah_domain_api_key',
+    'whah_domain_status',
+    'whah_domain_last_check',
 );
 
 foreach ( $options as $option ) {
