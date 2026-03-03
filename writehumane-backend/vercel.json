@@ -1,6 +1,7 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/", "destination": "/api/index" },
     { "source": "/track", "destination": "/api/track" },
     { "source": "/admin-stats", "destination": "/api/admin-stats" },
     { "source": "/admin-users", "destination": "/api/admin-users" },
