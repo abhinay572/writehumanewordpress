@@ -15,15 +15,28 @@ class WHAH_Usage_Tracker {
     }
 
     /**
-     * Check if user has word budget remaining
+     * Check if user has word budget remaining.
+     * Uses Freemius plan limit if configured, otherwise falls back to admin setting.
      */
     public function has_budget( $word_count ) {
-        $limit = (int) get_option( 'whah_monthly_word_limit', 50000 );
+        $limit = $this->get_effective_limit();
         if ( 0 === $limit ) {
             return true; // 0 = unlimited
         }
         $used = $this->get_words_used_this_month();
         return ( $used + $word_count ) <= $limit;
+    }
+
+    /**
+     * Get the effective word limit based on Freemius plan or admin setting.
+     *
+     * @return int
+     */
+    public function get_effective_limit() {
+        if ( WHAH_Freemius::is_configured() ) {
+            return WHAH_Freemius::get_word_limit();
+        }
+        return (int) get_option( 'whah_monthly_word_limit', 50000 );
     }
 
     /**
@@ -65,8 +78,9 @@ class WHAH_Usage_Tracker {
         global $wpdb;
         $table = $wpdb->prefix . 'whah_usage';
         $first_of_month = gmdate( 'Y-m-01 00:00:00' );
-        $limit = (int) get_option( 'whah_monthly_word_limit', 50000 );
+        $limit = $this->get_effective_limit();
         $user_id = get_current_user_id();
+        $plan = WHAH_Freemius::is_configured() ? WHAH_Freemius::get_plan_name() : 'free';
 
         $monthly = $wpdb->get_row( $wpdb->prepare(
             "SELECT COALESCE(SUM(input_words), 0) as words, COUNT(*) as requests FROM {$table} WHERE user_id = %d AND created_at >= %s",
@@ -78,6 +92,8 @@ class WHAH_Usage_Tracker {
             'requests_this_month' => (int) $monthly->requests,
             'monthly_limit'       => $limit,
             'words_remaining'     => ( 0 === $limit ) ? 999999 : max( 0, $limit - (int) $monthly->words ),
+            'plan'                => $plan,
+            'upgrade_url'         => WHAH_Freemius::get_upgrade_url(),
         );
     }
 

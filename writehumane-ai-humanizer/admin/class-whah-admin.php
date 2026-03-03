@@ -71,6 +71,16 @@ class WHAH_Admin {
             array( $this, 'render_connect' )
         );
 
+        // Sub: Pricing / Upgrade
+        add_submenu_page(
+            'whah-dashboard',
+            __( 'Pricing & Plans', 'writehumane-ai-humanizer' ),
+            __( 'Upgrade', 'writehumane-ai-humanizer' ),
+            'manage_options',
+            'whah-pricing',
+            array( $this, 'render_pricing' )
+        );
+
         // Sub: Settings
         add_submenu_page(
             'whah-dashboard',
@@ -715,6 +725,112 @@ class WHAH_Admin {
 
                 <?php submit_button( __( 'Save Settings', 'writehumane-ai-humanizer' ) ); ?>
             </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * PRICING & PLANS PAGE
+     */
+    public function render_pricing() {
+        $plans        = WHAH_Freemius::get_plans();
+        $current_plan = WHAH_Freemius::get_plan_name();
+        $is_configured = WHAH_Freemius::is_configured();
+        $tracker      = WHAH_Usage_Tracker::instance();
+        $stats        = $tracker->get_stats();
+        ?>
+        <div class="wrap whah-wrap">
+            <h1><?php esc_html_e( 'Pricing & Plans', 'writehumane-ai-humanizer' ); ?></h1>
+
+            <?php if ( ! $is_configured ) : ?>
+                <div class="notice notice-warning">
+                    <p>
+                        <strong><?php esc_html_e( 'Freemius Not Configured', 'writehumane-ai-humanizer' ); ?></strong> &mdash;
+                        <?php esc_html_e( 'The Freemius SDK is not yet set up. Plans shown below are placeholders. Once configured, users will be able to upgrade directly from this page.', 'writehumane-ai-humanizer' ); ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <!-- Current Usage -->
+            <div class="whah-card" style="margin-bottom:24px;">
+                <h2><?php esc_html_e( 'Your Current Usage', 'writehumane-ai-humanizer' ); ?></h2>
+                <table class="widefat striped" style="max-width:500px;">
+                    <tbody>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Current Plan', 'writehumane-ai-humanizer' ); ?></strong></td>
+                            <td><span style="text-transform:capitalize;font-weight:600;"><?php echo esc_html( $current_plan ); ?></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Words Used This Month', 'writehumane-ai-humanizer' ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $stats['words_this_month'] ) ); ?> / <?php echo esc_html( number_format( $stats['monthly_limit'] ) ); ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Words Remaining', 'writehumane-ai-humanizer' ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $stats['words_remaining'] ) ); ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Requests This Month', 'writehumane-ai-humanizer' ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $stats['requests_this_month'] ) ); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Plans -->
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                <?php foreach ( $plans as $slug => $plan ) :
+                    $is_current = ( $slug === $current_plan );
+                    $border_color = $is_current ? '#6366f1' : '#ddd';
+                    $bg = $is_current ? '#f0f0ff' : '#fff';
+                ?>
+                    <div class="whah-card" style="flex:1;min-width:250px;max-width:350px;border:2px solid <?php echo esc_attr( $border_color ); ?>;background:<?php echo esc_attr( $bg ); ?>;">
+                        <?php if ( $is_current ) : ?>
+                            <span style="background:#6366f1;color:#fff;padding:2px 12px;border-radius:12px;font-size:12px;font-weight:600;float:right;">
+                                <?php esc_html_e( 'Current', 'writehumane-ai-humanizer' ); ?>
+                            </span>
+                        <?php endif; ?>
+
+                        <h2 style="margin-top:0;"><?php echo esc_html( $plan['name'] ); ?></h2>
+                        <p style="font-size:28px;font-weight:700;margin:8px 0;"><?php echo esc_html( $plan['price'] ); ?></p>
+
+                        <ul style="list-style:none;padding:0;margin:16px 0;">
+                            <?php foreach ( $plan['features'] as $feature ) : ?>
+                                <li style="padding:6px 0;border-bottom:1px solid #eee;">
+                                    <span style="color:#22c55e;margin-right:8px;">&#10003;</span>
+                                    <?php echo esc_html( $feature ); ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <?php if ( ! $is_current && $slug !== 'free' && $is_configured ) : ?>
+                            <a href="<?php echo esc_url( WHAH_Freemius::get_upgrade_url() ); ?>"
+                                class="button button-primary" style="width:100%;text-align:center;padding:8px;">
+                                <?php printf( esc_html__( 'Upgrade to %s', 'writehumane-ai-humanizer' ), esc_html( $plan['name'] ) ); ?>
+                            </a>
+                        <?php elseif ( $is_current ) : ?>
+                            <button class="button" disabled style="width:100%;text-align:center;padding:8px;">
+                                <?php esc_html_e( 'Active Plan', 'writehumane-ai-humanizer' ); ?>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <?php if ( ! $is_configured ) : ?>
+                <!-- Setup Instructions -->
+                <div class="whah-card" style="margin-top:24px;">
+                    <h2><?php esc_html_e( 'How to Set Up Freemius Payments', 'writehumane-ai-humanizer' ); ?></h2>
+                    <ol style="line-height:2;">
+                        <li><?php printf( __( 'Create a free account at %s', 'writehumane-ai-humanizer' ), '<a href="https://freemius.com" target="_blank">freemius.com</a>' ); ?></li>
+                        <li><?php esc_html_e( 'Add a new Product (Plugin) in the Freemius dashboard', 'writehumane-ai-humanizer' ); ?></li>
+                        <li><?php esc_html_e( 'Create pricing plans: Free ($0), Pro ($9/mo), Enterprise ($29/mo)', 'writehumane-ai-humanizer' ); ?></li>
+                        <li><?php esc_html_e( 'Download the Freemius WordPress SDK from GitHub', 'writehumane-ai-humanizer' ); ?></li>
+                        <li><?php printf( __( 'Place it in: %s', 'writehumane-ai-humanizer' ), '<code>writehumane-ai-humanizer/freemius/</code>' ); ?></li>
+                        <li><?php printf( __( 'Update your Product ID and Public Key in %s', 'writehumane-ai-humanizer' ), '<code>includes/class-whah-freemius.php</code>' ); ?></li>
+                        <li><?php esc_html_e( 'Deploy the updated plugin - users can then upgrade from this page!', 'writehumane-ai-humanizer' ); ?></li>
+                    </ol>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
     }

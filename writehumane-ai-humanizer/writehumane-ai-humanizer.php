@@ -41,6 +41,7 @@ final class WriteHumane_AI_Humanizer {
     }
 
     private function includes() {
+        require_once WHAH_PLUGIN_DIR . 'includes/class-whah-freemius.php';
         require_once WHAH_PLUGIN_DIR . 'includes/class-whah-api.php';
         require_once WHAH_PLUGIN_DIR . 'includes/class-whah-rest-api.php';
         require_once WHAH_PLUGIN_DIR . 'includes/class-whah-settings.php';

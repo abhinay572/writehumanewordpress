@@ -107,7 +107,11 @@ OUTPUT ONLY the rewritten text. No explanations, no meta-commentary, no preamble
         $word_count = str_word_count( wp_strip_all_tags( $text ) );
 
         if ( ! $tracker->has_budget( $word_count ) ) {
-            return new WP_Error( 'budget_exceeded', __( 'Monthly word limit reached. Please contact the administrator.', 'writehumane-ai-humanizer' ) );
+            $msg = __( 'Monthly word limit reached.', 'writehumane-ai-humanizer' );
+            if ( WHAH_Freemius::is_configured() && ! WHAH_Freemius::is_paying() ) {
+                $msg .= ' ' . __( 'Upgrade to Pro for more words.', 'writehumane-ai-humanizer' );
+            }
+            return new WP_Error( 'budget_exceeded', $msg, array( 'upgrade_url' => WHAH_Freemius::get_upgrade_url() ) );
         }
 
         $result = $this->call_gemini( $text, $args['mode'], $args['tone'], $api_key );
